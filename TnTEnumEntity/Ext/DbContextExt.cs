@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 
-namespace TnTEnumEntity;
+namespace TnTEnumEntity.Ext;
 public static class DbContextExt {
     public static  void EnsureCorrectHandlingOfEnumEntities(this DbContext dbContext) {
         foreach (var entity in dbContext.ChangeTracker.Entries().Where(e => e.Entity is IEnumEntity)) {
