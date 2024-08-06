@@ -1,1 +1,1 @@
-# WFCC.EnumEntity
+# TnTEnumEntity
