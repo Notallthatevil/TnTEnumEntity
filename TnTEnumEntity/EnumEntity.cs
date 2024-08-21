@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Collections.Immutable;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -21,6 +22,12 @@ public abstract class EnumEntity<TEnum, TDerived> : IEnumEntity where TEnum : st
     [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
     public TEnum Value { get; set; }
 
+    private readonly static ImmutableArray<TDerived> _values = Enum.GetValues<TEnum>().Select(e => new TDerived { Value = e, Name = e.ToString(), Description = GetDescriptionAttribute(e) }).ToImmutableArray();
+
+    public TDerived this[TEnum @enum] => ToDerived(@enum);
+
+    public static TDerived ToDerived(TEnum @enum) => _values.First(e => e.Value.Equals(@enum));
+
     public static IEnumerable<object> GetValues() {
         return Enum.GetValues<TEnum>().Select(e => new TDerived { Value = e, Name = e.ToString(), Description = GetDescriptionAttribute(e) });
     }
@@ -34,7 +41,18 @@ public abstract class EnumEntity<TEnum, TDerived> : IEnumEntity where TEnum : st
     }
 
     public static implicit operator TEnum(EnumEntity<TEnum, TDerived> entity) {
-        return (TEnum)Enum.ToObject(typeof(TEnum), entity.Value);
+        return (TEnum)Enum.ToObject(typeof(TEnum), entity?.Value ?? default);
+    }
+
+    public override bool Equals(object? obj) {
+        if (obj is EnumEntity<TEnum, TDerived> entity && obj is not null) {
+            return Value.Equals(entity.Value);
+        }
+        return false;
+    }
+
+    public override int GetHashCode() {
+        return Value.GetHashCode();
     }
 
     private static string GetDescriptionAttribute(TEnum @enum) => @enum.GetType()
