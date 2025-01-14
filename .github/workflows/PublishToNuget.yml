@@ -1,0 +1,45 @@
+name: Deploy to NuGet
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+          fetch-depth: 0
+
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v3.1.1
+      with:
+        versionSpec: '6.0.x'
+
+    - name: Determine Version
+      id: version_step # step id used as reference for output values
+      uses: gittools/actions/gitversion/execute@v3.1.1
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build project
+      run: dotnet build --configuration Release /p:AssemplyVersion=${{ steps.version_step.outputs.MajorMinorPatch }} /p:FileVersion=${{ steps.version_step.outputs.MajorMinorPatch }}
+
+    - name: Publish TnTComponents to NuGet
+      env:
+        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      run: |
+        dotnet pack TnTResult/TnTResult.csproj --configuration Release --output ./nupkg /p:PackageVersion=${{ steps.version_step.outputs.MajorMinorPatch }}
+        dotnet pack TnTResult.Refit/TnTResult.Refit.csproj --configuration Release --output ./nupkg /p:PackageVersion=${{ steps.version_step.outputs.MajorMinorPatch }}
+        dotnet pack TnTResult.AspNetCore.Http/TnTResult.AspNetCore.Http.csproj --configuration Release --output ./nupkg /p:PackageVersion=${{ steps.version_step.outputs.MajorMinorPatch }}
+    - run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
