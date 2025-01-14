@@ -35,11 +35,12 @@ jobs:
     - name: Build project
       run: dotnet build --configuration Release /p:AssemplyVersion=${{ steps.version_step.outputs.MajorMinorPatch }} /p:FileVersion=${{ steps.version_step.outputs.MajorMinorPatch }}
 
+    - name: Build project
+      run: dotnet test --configuration Release --no-build
+
     - name: Publish TnTComponents to NuGet
       env:
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       run: |
-        dotnet pack TnTResult/TnTResult.csproj --configuration Release --output ./nupkg /p:PackageVersion=${{ steps.version_step.outputs.MajorMinorPatch }}
-        dotnet pack TnTResult.Refit/TnTResult.Refit.csproj --configuration Release --output ./nupkg /p:PackageVersion=${{ steps.version_step.outputs.MajorMinorPatch }}
-        dotnet pack TnTResult.AspNetCore.Http/TnTResult.AspNetCore.Http.csproj --configuration Release --output ./nupkg /p:PackageVersion=${{ steps.version_step.outputs.MajorMinorPatch }}
+        dotnet pack TnTEnumEntity/TnTEnumEntity.csproj --configuration Release --output ./nupkg /p:PackageVersion=${{ steps.version_step.outputs.MajorMinorPatch }}
     - run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
